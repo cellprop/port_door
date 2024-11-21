@@ -1,7 +1,7 @@
 import time
 import paho.mqtt.client as mqtt
 import json
-import RPi.GPIO as GPIO
+from gpiozero import LED  # Import LED for GPIO control (LED works for any digital output)
 
 # MQTT setup
 MQTT_BROKER = "192.168.68.106"  # Replace with your MQTT broker IP or domain
@@ -9,19 +9,11 @@ MQTT_PORT = 1884  # Default MQTT port
 port_id = 'port01'  # Define your port_id
 MQTT_TOPIC = port_id + 'portControl'  # Topic to subscribe to
 
-# GPIO setup
-GPIO.setmode(GPIO.BCM)  # Use BCM numbering
-
 # Define GPIO pins for Door A and Door B
 DOOR_PINS = {
-    'A': 17,  # Replace with your actual GPIO pin number for Door A
-    'B': 27   # Replace with your actual GPIO pin number for Door B
+    'A': LED(17),  # Replace with your actual GPIO pin number for Door A
+    'B': LED(27)   # Replace with your actual GPIO pin number for Door B
 }
-
-# Setup GPIO pins
-for pin in DOOR_PINS.values():
-    GPIO.setup(pin, GPIO.OUT)
-    GPIO.output(pin, GPIO.LOW)  # Initialize pins to LOW (doors closed)
 
 # MQTT Client initialization
 client = mqtt.Client()
@@ -56,9 +48,12 @@ def control_door(door_number, signal):
     # Use door_number and signal to control the GPIO pin
     if door_number in DOOR_PINS and signal in [0, 1]:
         pin = DOOR_PINS[door_number]
-        GPIO.output(pin, GPIO.HIGH if signal == 1 else GPIO.LOW)
-        action = "opened" if signal == 1 else "closed"
-        print(f"Door {door_number} {action}")
+        if signal == 1:
+            pin.on()  # Turn the pin ON (open the door)
+            print(f"Door {door_number} opened")
+        else:
+            pin.off()  # Turn the pin OFF (close the door)
+            print(f"Door {door_number} closed")
     else:
         print("Invalid door number or signal received")
 
@@ -75,4 +70,5 @@ try:
 except KeyboardInterrupt:
     print("Exiting program")
 finally:
-    GPIO.cleanup()
+    # No GPIO.cleanup() needed as gpiozero handles cleanup automatically
+    print("Program terminated")
