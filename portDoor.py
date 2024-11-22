@@ -6,7 +6,7 @@ from gpiozero import LED  # Import LED for GPIO control (LED works for any digit
 # MQTT setup
 MQTT_BROKER = "192.168.68.106"  # Replace with your MQTT broker IP or domain
 MQTT_PORT = 1884  # Default MQTT port
-port_id = 'port01'  # Define your port_id
+port_id = 'P01'  # Define your port_id
 MQTT_TOPIC = port_id + 'portControl'  # Topic to subscribe to
 
 # Define GPIO pins for Door A and Door B
