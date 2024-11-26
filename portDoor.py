@@ -46,16 +46,16 @@ def on_message(client, userdata, msg):
 
 def control_door(door_number, signal):
     # Use door_number and signal to control the GPIO pin
-    if door_number in DOOR_PINS and signal in [0, 1]:
+    if door_number in DOOR_PINS and signal in ['0', '1']:
         pin = DOOR_PINS[door_number]
-        if signal == 1:
+        if signal == '1':
             pin.on()  # Turn the pin ON (open the door)
-            print(f"Door {door_number} opened")
+            print(f"Door {door_number} opened at port: ", port_id)
         else:
             pin.off()  # Turn the pin OFF (close the door)
-            print(f"Door {door_number} closed")
+            print(f"Door {door_number} closed at port: ", port_id)
     else:
-        print("Invalid door number or signal received")
+        print(door_number, signal, "Invalid")
 
 # Assign callbacks
 client.on_connect = on_connect
