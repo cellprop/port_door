@@ -1,21 +1,17 @@
 import time
 import paho.mqtt.client as mqtt
 import json
-from gpiozero import LED  # Import LED for GPIO control (LED works for any digital output)
+from gpiozero import LED
 
 # MQTT setup
-MQTT_BROKER = "192.168.68.106"  # Replace with your MQTT broker IP or domain
-MQTT_PORT = 1884  # Default MQTT port
-#port_id = 'P01'  # Define your port_id
+MQTT_BROKER = "192.168.68.106"  # Replace with your broker's IP
+MQTT_PORT = 1884
 pod_id = 'TD01'
 zone_id = 'zone1'
-MQTT_TOPIC = pod_id + zone_id  # Topic to subscribe to
+MQTT_TOPIC = f"{zone_id}{pod_id}"  # Match the new topic format
 
-# Define GPIO pins for Door A and Door B
-DOOR_PINS = {
-    'A': LED(23),  # Replace with your actual GPIO pin number for Door A
-    'B': LED(24)   # Replace with your actual GPIO pin number for Door B
-}
+# Define GPIO pin for the door
+door = LED(23)  # Directly assign GPIO pin
 
 # MQTT Client initialization
 client = mqtt.Client()
@@ -24,7 +20,6 @@ client = mqtt.Client()
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected to MQTT Broker")
-        # Subscribe to the topic
         client.subscribe(MQTT_TOPIC)
         print(f"Subscribed to topic: {MQTT_TOPIC}")
     else:
@@ -34,30 +29,26 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     try:
         payload = json.loads(msg.payload.decode())
-        message_type = payload.get('type')
-        message_content = payload.get('message')
+        print("Received MQTT message:", payload)  # Debug print
         
-        if message_type == 'doorControl':
-            door_number = message_content.get('doorNumber')
-            signal = message_content.get('signal')
-            control_door(door_number, signal)
+        if payload.get('type') == 'DoorOpening':
+            action = payload.get('path')
+            process_door_action(action)
         else:
-            print("Invalid message type received")
+            print("Invalid message format:", payload)
     except Exception as e:
         print("Error processing message:", e)
 
-def control_door(door_number, signal):
-    # Use door_number and signal to control the GPIO pin
-    if door_number in DOOR_PINS and signal in ['0', '1']:
-        pin = DOOR_PINS[door_number]
-        if signal == '1':
-            pin.on()  # Turn the pin ON (open the door)
-            print(f"Door {door_number} opened at port: ", pod_id, zone_id)
-        else:
-            pin.off()  # Turn the pin OFF (close the door)
-            print(f"Door {door_number} closed at port: ", pod_id, zone_id)
+def process_door_action(action):
+    """Controls the door based on the received action."""
+    if action == "O00000":
+        door.on()
+        print(f"Door opened at port: {pod_id}, {zone_id}")
+    elif action == "C00000":
+        door.off()
+        print(f"Door closed at port: {pod_id}, {zone_id}")
     else:
-        print(door_number, signal, "Invalid")
+        print(f"Invalid door action received: {action}")
 
 # Assign callbacks
 client.on_connect = on_connect
@@ -72,5 +63,4 @@ try:
 except KeyboardInterrupt:
     print("Exiting program")
 finally:
-    # No GPIO.cleanup() needed as gpiozero handles cleanup automatically
     print("Program terminated")
