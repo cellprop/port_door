@@ -1,5 +1,4 @@
 import time
-import threading
 import paho.mqtt.client as mqtt
 import json
 from gpiozero import LED
@@ -69,16 +68,6 @@ def on_message(client, userdata, msg):
 
 # ================= Pod Door Control ================= #
 
-def stop_pod_expansion():
-    """
-    Stops the expansion of the pod door after 2 seconds by turning off the second pin.
-    Uses threading to avoid blocking the main MQTT loop.
-    """
-    time.sleep(2)  # Wait for partial expansion
-    POD_DOOR_PINS[1].off()  # Stop expansion
-    print(f"⏹ Pod Door expansion stopped midway at {POD_ID}, {ZONE_ID}")
-
-
 def handle_pod_door(payload):
     """
     Handles opening and closing of the pod door based on MQTT messages.
@@ -92,8 +81,11 @@ def handle_pod_door(payload):
             for pin in POD_DOOR_PINS:
                 pin.on()  # Activate both pins to expand
             
-            # Start a non-blocking thread to stop expansion after 2 seconds
-            threading.Thread(target=stop_pod_expansion).start()
+            print("⏳ Waiting 2 seconds before stopping expansion...")
+            time.sleep(2)  # Wait for partial expansion
+
+            POD_DOOR_PINS[1].off()  # Stop expansion
+            print(f"⏹ Pod Door expansion stopped midway at {POD_ID}, {ZONE_ID}")
 
         elif action == "C00000":  # Close pod door
             print(f"🔒 Closing Pod Door at {POD_ID}, {ZONE_ID}...")
@@ -106,16 +98,6 @@ def handle_pod_door(payload):
 
 
 # ================= Port Door Control ================= #
-
-def stop_port_expansion():
-    """
-    Stops the expansion of the port door after 2 seconds by turning off the second pin.
-    Uses threading to avoid blocking the main MQTT loop.
-    """
-    time.sleep(2)  # Wait for partial expansion
-    PORT_DOOR_PINS[1].off()  # Stop expansion
-    print(f"⏹ Port Door expansion stopped midway at {PORT_ID}")
-
 
 def handle_port_door(payload):
     """
@@ -132,8 +114,11 @@ def handle_port_door(payload):
                 for pin in PORT_DOOR_PINS:
                     pin.on()  # Activate both pins to expand
 
-                # Start a non-blocking thread to stop expansion after 2 seconds
-                threading.Thread(target=stop_port_expansion).start()
+                print("⏳ Waiting 2 seconds before stopping expansion...")
+                time.sleep(2)  # Wait for partial expansion
+
+                PORT_DOOR_PINS[1].off()  # Stop expansion
+                print(f"⏹ Port Door expansion stopped midway at {PORT_ID}")
 
             else:  # signal == '0' → Close port door
                 print(f"🔒 Closing Port Door {door_number} at {PORT_ID}...")
